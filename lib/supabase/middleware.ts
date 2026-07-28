@@ -4,7 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 // Reachable without a session. `/auth` handles emailed links, which are
 // followed before any session exists. `/reset-password` is deliberately not
 // listed: it needs the temporary session created by the recovery link.
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/auth"];
+
+// Pointless to show these to someone who is already signed in.
+const SIGNED_OUT_ONLY = ["/login", "/signup"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -44,7 +47,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname.startsWith("/login")) {
+  if (user && SIGNED_OUT_ONLY.some((p) => pathname.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/products";
     url.search = "";

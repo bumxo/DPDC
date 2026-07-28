@@ -46,7 +46,14 @@ export default async function AdminOrdersPage() {
                       #{shortId(order.id)}
                     </Link>
                   </td>
-                  <td className="px-4 py-3">{order.customer?.email ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {order.customer?.company && (
+                      <p className="font-medium">{order.customer.company}</p>
+                    )}
+                    <p className={order.customer?.company ? "text-xs text-gray-500" : ""}>
+                      {order.customer?.email ?? "—"}
+                    </p>
+                  </td>
                   <td className="px-4 py-3 text-gray-500">
                     {formatDate(order.created_at)}
                   </td>

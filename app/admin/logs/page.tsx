@@ -13,6 +13,7 @@ const ACTION_LABELS: Record<string, string> = {
   "products.imported": "Excel import",
   "order.placed": "Order placed",
   "order.status_changed": "Order status changed",
+  "account.signed_up": "Account registered",
   "account.password_changed": "Password changed",
   "account.email_change_requested": "Email change requested",
   "account.verification_resent": "Verification email resent",
@@ -48,6 +49,8 @@ function describe(log: LogRow): string {
       return `Order ${String(log.entity_id ?? "").slice(0, 8).toUpperCase()} — total ${d.total ?? ""}`;
     case "order.status_changed":
       return `Order ${String(log.entity_id ?? "").slice(0, 8).toUpperCase()}: ${d.from} → ${d.to}`;
+    case "account.signed_up":
+      return [d.email, d.company].filter(Boolean).join(" · ") || "—";
     case "account.email_change_requested":
       return `New address: ${d.to ?? ""}`;
     case "account.password_changed":

@@ -23,6 +23,12 @@ export default function LoginPage({
           Forgot your password?
         </Link>
       </p>
+      <p className="mt-6 border-t border-gray-200 pt-6 text-center text-sm text-gray-600">
+        New customer?{" "}
+        <Link href="/signup" className="font-medium text-brand-600 hover:underline">
+          Create an account
+        </Link>
+      </p>
     </div>
   );
 }

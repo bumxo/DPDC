@@ -34,6 +34,9 @@ RLS) · Tailwind CSS · deployable to Vercel.
   file (template in `public/templates/product-import-template.xlsx`,
   pre-filled with 100 sample pharmacy items). Products are upserted by SKU;
   each row is one UOM price line.
+- **Self-service signup** — `/signup` registers a new business (company
+  name, work email, password) and emails a confirmation link. New accounts
+  are always customers; see the note on role escalation below.
 - **Account security** — `/account` lets a signed-in user change their
   password (the current one is re-verified first) and change their email
   address (confirmed by a link sent to the new inbox). Forgotten passwords
@@ -102,6 +105,9 @@ supabase db push
 - `0003_account_security.sql` — syncs `profiles.email` when a user confirms
   an email change, and adds `log_account_event()` so users can record their
   own account events without `audit_logs` being writable by them.
+- `0004_self_signup.sql` — captures the company name from the signup form,
+  validates the requested role (falling back to `customer`), and logs new
+  registrations to the audit trail.
 
 `0002` and `0003` are idempotent: re-running them is safe and repairs a
 partially applied state, so if a run fails partway (or you are unsure whether
@@ -169,6 +175,7 @@ seeded account.
 actions/            Server actions (auth, checkout, admin mutations)
 app/
   login/            Sign-in page
+  signup/           Self-service registration (always creates a customer)
   forgot-password/  Request a password-reset email
   reset-password/   Set a new password from a recovery link
   auth/confirm/     Landing route for emailed verification/recovery links
@@ -193,6 +200,16 @@ middleware.ts       Session refresh + auth redirects
   `lib/types.ts`).
 - Deleting a product that appears on an order deactivates it instead
   (foreign-key safe).
-- There is no self-serve signup page by design — B2B accounts are
-  provisioned by an admin (via the Supabase dashboard or the seed script's
-  approach with `app_metadata.role`).
+- **Signup always creates a customer.** The role is read from
+  `app_metadata`, which the browser's anon key cannot write — only the
+  service role (seed script, Supabase dashboard) can set it. Anything a
+  visitor submits, including a `role` field smuggled into `user_metadata`,
+  is ignored. Admins are promoted deliberately:
+
+  ```sql
+  update public.profiles set role = 'admin' where email = 'someone@example.com';
+  ```
+
+- **Turn on email confirmation before going live.** With self-signup open,
+  Supabase's *Confirm email* toggle (Authentication → Sign In / Providers →
+  Email) is what stops anyone registering with an address they don't own.

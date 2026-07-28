@@ -51,6 +51,7 @@ export default async function AdminOrderDetailPage({
         <div>
           <h1 className="text-2xl font-bold">Order #{shortId(o.id)}</h1>
           <p className="text-sm text-gray-500">
+            {o.customer?.company ? `${o.customer.company} · ` : ""}
             {o.customer?.email ?? "Unknown customer"} ·{" "}
             {formatDate(o.created_at)}
           </p>
