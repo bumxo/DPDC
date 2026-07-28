@@ -44,6 +44,12 @@ RLS) · Tailwind CSS · deployable to Vercel.
 - **Email verification** — verification status is shown on the account page,
   with a resend button and a site-wide banner while an address is
   unverified.
+- **Account management** — Admin → Accounts lists every account with role,
+  company, verification status and last sign-in, and lets an admin create
+  accounts, change roles, reset passwords, and mark an address verified
+  without any email being sent. Guarded against the two ways an admin can
+  lock everyone out: you cannot change your own role, and the last remaining
+  admin cannot be demoted.
 - **Activity logs** — Admin → Logs shows an audit trail (product
   create/update/delete, imports, order placement, status changes, and
   account events like password changes) captured by database triggers.
@@ -79,7 +85,7 @@ Fill in:
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public anon key (safe for the browser; RLS protects data) |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Server-only.** Used by the seed script. Never commit or expose it. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Server-only.** Used by the seed script, `create-user`, and the admin Accounts page. Bypasses all RLS — never commit it or prefix it with `NEXT_PUBLIC_`. |
 | `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` | Credentials for the seeded admin account |
 | `SEED_CUSTOMER_EMAIL` / `SEED_CUSTOMER_PASSWORD` | Credentials for the seeded customer account |
 
@@ -179,11 +185,20 @@ seeded account.
 ## Deploying to Vercel
 
 1. Push this repo to GitHub and import it into Vercel.
-2. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the
-   Vercel project's environment variables. (`SUPABASE_SERVICE_ROLE_KEY` is
-   only needed locally for seeding — don't add it unless you have a
-   server-side use for it.)
+2. Set these in the Vercel project's environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SITE_URL` — your deployed URL, so emailed links point back
+     to the right host
+   - `SUPABASE_SERVICE_ROLE_KEY` — required by the admin Accounts page
+     (`/admin/users`). Everything else works without it.
 3. Deploy. No further configuration is required.
+
+> **The service-role key bypasses every RLS policy.** Add it as a plain
+> server variable — never with a `NEXT_PUBLIC_` prefix, which would ship it to
+> every visitor's browser. It is read only by `lib/supabase/admin.ts`, which
+> imports `server-only`; importing that module from a client component fails
+> the build rather than leaking the key.
 
 ## Project structure
 

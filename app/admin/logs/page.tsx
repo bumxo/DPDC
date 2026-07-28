@@ -14,6 +14,10 @@ const ACTION_LABELS: Record<string, string> = {
   "order.placed": "Order placed",
   "order.status_changed": "Order status changed",
   "account.signed_up": "Account registered",
+  "admin.user_created": "Account created by admin",
+  "admin.role_changed": "Role changed by admin",
+  "admin.password_reset": "Password reset by admin",
+  "admin.email_confirmed": "Email verified by admin",
   "account.password_changed": "Password changed",
   "account.email_change_requested": "Email change requested",
   "account.verification_resent": "Verification email resent",
@@ -50,7 +54,13 @@ function describe(log: LogRow): string {
     case "order.status_changed":
       return `Order ${String(log.entity_id ?? "").slice(0, 8).toUpperCase()}: ${d.from} → ${d.to}`;
     case "account.signed_up":
-      return [d.email, d.company].filter(Boolean).join(" · ") || "—";
+    case "admin.user_created":
+      return [d.email, d.company, d.role].filter(Boolean).join(" · ") || "—";
+    case "admin.role_changed":
+      return `New role: ${d.role ?? ""}`;
+    case "admin.password_reset":
+    case "admin.email_confirmed":
+      return `User ${String(log.entity_id ?? "").slice(0, 8).toUpperCase()}`;
     case "account.email_change_requested":
       return `New address: ${d.to ?? ""}`;
     case "account.password_changed":
