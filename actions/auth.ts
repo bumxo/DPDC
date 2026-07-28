@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
+import { describeAuthError, logAuthError } from "@/lib/auth-errors";
 
 export interface AuthState {
   error?: string;
@@ -74,7 +75,10 @@ export async function signUp(
     },
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    logAuthError("signUp", error);
+    return { error: describeAuthError(error, "signup") };
+  }
 
   // Supabase returns a user with no identities when the address is already
   // registered. Report the same message either way so this form cannot be

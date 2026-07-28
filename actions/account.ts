@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site-url";
+import { describeAuthError, logAuthError } from "@/lib/auth-errors";
 
 export interface AccountState {
   error?: string;
@@ -55,7 +56,10 @@ export async function changePassword(
   if (reauthError) return { error: "Current password is incorrect." };
 
   const { error } = await supabase.auth.updateUser({ password: next });
-  if (error) return { error: error.message };
+  if (error) {
+    logAuthError("changePassword", error);
+    return { error: describeAuthError(error) };
+  }
 
   await supabase.rpc("log_account_event", {
     p_action: "account.password_changed",
@@ -94,7 +98,10 @@ export async function changeEmail(
     { email: newEmail },
     { emailRedirectTo: `${getSiteUrl()}/auth/confirm?next=/account` }
   );
-  if (error) return { error: error.message };
+  if (error) {
+    logAuthError("changeEmail", error);
+    return { error: describeAuthError(error, "signup") };
+  }
 
   await supabase.rpc("log_account_event", {
     p_action: "account.email_change_requested",
@@ -122,7 +129,10 @@ export async function resendVerification(): Promise<AccountState> {
     email: user.email,
     options: { emailRedirectTo: `${getSiteUrl()}/auth/confirm?next=/account` },
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logAuthError("resendVerification", error);
+    return { error: describeAuthError(error, "signup") };
+  }
 
   await supabase.rpc("log_account_event", {
     p_action: "account.verification_resent",
@@ -182,7 +192,10 @@ export async function completePasswordReset(
   }
 
   const { error } = await supabase.auth.updateUser({ password: next });
-  if (error) return { error: error.message };
+  if (error) {
+    logAuthError("completePasswordReset", error);
+    return { error: describeAuthError(error, "recovery") };
+  }
 
   await supabase.rpc("log_account_event", {
     p_action: "account.password_reset_completed",
