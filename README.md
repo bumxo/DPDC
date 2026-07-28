@@ -50,6 +50,9 @@ RLS) · Tailwind CSS · deployable to Vercel.
   without any email being sent. Guarded against the two ways an admin can
   lock everyone out: you cannot change your own role, and the last remaining
   admin cannot be demoted.
+- **Three roles** — `customer`, `admin`, and `superuser`. A superuser is an
+  admin that may additionally **delete accounts**, and whose own account
+  **cannot be deleted**. See below.
 - **Activity logs** — Admin → Logs shows an audit trail (product
   create/update/delete, imports, order placement, status changes, and
   account events like password changes) captured by database triggers.
@@ -114,6 +117,9 @@ supabase db push
 - `0004_self_signup.sql` — captures the company name from the signup form,
   validates the requested role (falling back to `customer`), and logs new
   registrations to the audit trail.
+- `0005_superuser.sql` — adds the `superuser` role, widens `is_admin()` to
+  include it, and adds the trigger that makes superuser accounts
+  undeletable.
 
 `0002` and `0003` are idempotent: re-running them is safe and repairs a
 partially applied state, so if a run fails partway (or you are unsure whether
@@ -232,6 +238,38 @@ middleware.ts       Session refresh + auth redirects
   `lib/types.ts`).
 - Deleting a product that appears on an order deactivates it instead
   (foreign-key safe).
+### Roles
+
+| | customer | admin | superuser |
+|---|---|---|---|
+| Browse catalog, place orders | ✔ | ✔ | ✔ |
+| Manage products, orders, imports | | ✔ | ✔ |
+| Create accounts, change roles, reset passwords | | ✔ | ✔ |
+| **Delete accounts** | | | ✔ |
+| Grant/revoke superuser, manage superuser accounts | | | ✔ |
+| Own account can be deleted | ✔ | ✔ | **never** |
+
+Create the first superuser from the command line — the role travels in
+`app_metadata`, which only the service role can write, so it is unreachable
+from the browser:
+
+```bash
+npm run create-user -- --email=you@example.com --password='a-strong-password' \
+                       --company='DPDC' --role=superuser
+```
+
+"Cannot be deleted" is enforced by a database trigger, not just the UI: the
+delete is blocked even through the Supabase dashboard or the admin API. If a
+superuser genuinely must be removed, demote it first in the SQL editor and
+then delete it normally:
+
+```sql
+update public.profiles set role = 'admin' where email = 'someone@example.com';
+```
+
+A plain admin cannot demote a superuser, reset its password, or delete any
+account — otherwise "protected" would only be one click of misdirection deep.
+
 - **Signup always creates a customer.** The role is read from
   `app_metadata`, which the browser's anon key cannot write — only the
   service role (seed script, Supabase dashboard) can set it. Anything a

@@ -18,7 +18,11 @@ function SubmitButton() {
   );
 }
 
-export function CreateUserForm() {
+export function CreateUserForm({
+  canCreateSuperuser,
+}: {
+  canCreateSuperuser: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [state, formAction] = useFormState<UserActionState, FormData>(
     adminCreateUser,
@@ -125,6 +129,9 @@ export function CreateUserForm() {
           >
             <option value="customer">Customer</option>
             <option value="admin">Admin</option>
+            {canCreateSuperuser && (
+              <option value="superuser">Superuser</option>
+            )}
           </select>
         </div>
       </div>

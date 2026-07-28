@@ -14,6 +14,20 @@ export interface UserActionState {
 }
 
 const MIN_PASSWORD_LENGTH = 8;
+const VALID_ROLES: Role[] = ["customer", "admin", "superuser"];
+
+/** Reads a target's current role using the service client. */
+async function getTargetRole(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string
+): Promise<Role | null> {
+  const { data } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+  return (data?.role as Role) ?? null;
+}
 
 /** Create an account directly. Pre-verified, so no confirmation email is sent. */
 export async function adminCreateUser(
@@ -34,8 +48,11 @@ export async function adminCreateUser(
   if (password.length < MIN_PASSWORD_LENGTH) {
     return { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` };
   }
-  if (role !== "customer" && role !== "admin") {
-    return { error: "Role must be customer or admin." };
+  if (!VALID_ROLES.includes(role)) {
+    return { error: "Role must be customer, admin, or superuser." };
+  }
+  if (role === "superuser" && !auth.context.isSuperuser) {
+    return { error: "Only a superuser can create another superuser." };
   }
 
   let admin;
@@ -86,8 +103,8 @@ export async function adminSetRole(
   const auth = await requireAdminContext();
   if (!auth.ok) return { error: auth.error };
 
-  if (role !== "customer" && role !== "admin") {
-    return { error: "Role must be customer or admin." };
+  if (!VALID_ROLES.includes(role)) {
+    return { error: "Role must be customer, admin, or superuser." };
   }
 
   // Changing your own role is how an admin accidentally locks themselves out
@@ -103,12 +120,24 @@ export async function adminSetRole(
     return { error: (e as Error).message };
   }
 
+  const targetRole = await getTargetRole(admin, userId);
+  if (!targetRole) return { error: "Account not found." };
+
+  // Only a superuser may grant or revoke superuser. Without the second check
+  // a plain admin could demote the superuser and take over.
+  if (
+    (role === "superuser" || targetRole === "superuser") &&
+    !auth.context.isSuperuser
+  ) {
+    return { error: "Only a superuser can change superuser accounts." };
+  }
+
   // Never leave the system with no admin at all.
   if (role === "customer") {
     const { count } = await admin
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .eq("role", "admin");
+      .in("role", ["admin", "superuser"]);
     if ((count ?? 0) <= 1) {
       return { error: "This is the last admin — promote someone else first." };
     }
@@ -154,6 +183,13 @@ export async function adminResetPassword(
     return { error: (e as Error).message };
   }
 
+  // Resetting a superuser's password would hand a plain admin the superuser
+  // account outright, which is the whole protection defeated.
+  const targetRole = await getTargetRole(admin, userId);
+  if (targetRole === "superuser" && !auth.context.isSuperuser) {
+    return { error: "Only a superuser can reset a superuser's password." };
+  }
+
   const { error } = await admin.auth.admin.updateUserById(userId, { password });
   if (error) return { error: error.message };
 
@@ -161,6 +197,68 @@ export async function adminResetPassword(
 
   revalidatePath("/admin/users");
   return { success: "Password updated." };
+}
+
+/**
+ * Permanently delete an account. Restricted to superusers — plain admins
+ * cannot delete anyone. Superuser accounts are undeletable; the database
+ * enforces that too, via a trigger, so this check is only the friendly error.
+ */
+export async function adminDeleteUser(
+  userId: string
+): Promise<UserActionState> {
+  const auth = await requireAdminContext();
+  if (!auth.ok) return { error: auth.error };
+
+  if (!auth.context.isSuperuser) {
+    return { error: "Only a superuser can delete accounts." };
+  }
+  if (userId === auth.context.actorId) {
+    return { error: "You cannot delete your own account." };
+  }
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch (e) {
+    return { error: (e as Error).message };
+  }
+
+  const targetRole = await getTargetRole(admin, userId);
+  if (!targetRole) return { error: "Account not found." };
+  if (targetRole === "superuser") {
+    return { error: "Superuser accounts cannot be deleted." };
+  }
+
+  // Orders reference profiles, so an account with history cannot be removed
+  // without destroying that history. Say so instead of failing opaquely.
+  const { count: orderCount } = await admin
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", userId);
+
+  if ((orderCount ?? 0) > 0) {
+    return {
+      error: `This account has ${orderCount} order(s). Deleting it would remove that order history, so it is blocked — demote the account instead.`,
+    };
+  }
+
+  const { data: target } = await admin
+    .from("profiles")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) return { error: error.message };
+
+  await logAdminAction(auth.context.actorId, "admin.user_deleted", userId, {
+    email: target?.email ?? null,
+    role: targetRole,
+  });
+
+  revalidatePath("/admin/users");
+  return { success: `Deleted ${target?.email ?? "account"}.` };
 }
 
 /** Mark an address as verified without sending a confirmation email. */

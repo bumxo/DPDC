@@ -5,7 +5,10 @@
  *
  * Usage:
  *   npm run create-user -- --email=buyer@corp.ph --password='secret123' \
- *                          --company='Corp Pharmacy' [--role=admin]
+ *                          --company='Corp Pharmacy' [--role=admin|superuser]
+ *
+ * This is the only way to create the first superuser: the role travels in
+ * app_metadata, which the browser's anon key cannot write.
  *
  * Re-running for an existing address resets that account's password and
  * updates its company/role, so it doubles as a rescue tool if you are locked
@@ -50,8 +53,10 @@ if (password.length < 8) {
   console.error("Password must be at least 8 characters.");
   process.exit(1);
 }
-if (role !== "customer" && role !== "admin") {
-  console.error(`Invalid --role "${role}". Use "customer" or "admin".`);
+if (role !== "customer" && role !== "admin" && role !== "superuser") {
+  console.error(
+    `Invalid --role "${role}". Use "customer", "admin", or "superuser".`
+  );
   process.exit(1);
 }
 

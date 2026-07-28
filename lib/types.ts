@@ -1,4 +1,14 @@
-export type Role = "customer" | "admin";
+/**
+ * `superuser` is an admin that may additionally delete accounts, and that
+ * cannot itself be deleted (enforced by a database trigger).
+ */
+export type Role = "customer" | "admin" | "superuser";
+
+export const ADMIN_ROLES: Role[] = ["admin", "superuser"];
+
+export function isAdminRole(role: Role) {
+  return role === "admin" || role === "superuser";
+}
 
 export type OrderStatus =
   | "pending"

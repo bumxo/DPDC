@@ -5,6 +5,7 @@ import "server-only";
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { isAdminRole, type Role } from "@/lib/types";
 
 /**
  * Service-role client. Bypasses RLS entirely — only ever use it behind
@@ -28,6 +29,9 @@ export interface AdminContext {
   /** The signed-in admin performing the action. */
   actorId: string;
   actorEmail: string;
+  actorRole: Role;
+  /** Superusers may delete accounts and manage other superusers. */
+  isSuperuser: boolean;
 }
 
 /**
@@ -51,13 +55,19 @@ export async function requireAdminContext(): Promise<
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  const role = profile?.role as Role | undefined;
+  if (!role || !isAdminRole(role)) {
     return { ok: false, error: "Admin access required." };
   }
 
   return {
     ok: true,
-    context: { actorId: user.id, actorEmail: user.email ?? "" },
+    context: {
+      actorId: user.id,
+      actorEmail: user.email ?? "",
+      actorRole: role,
+      isSuperuser: role === "superuser",
+    },
   };
 }
 

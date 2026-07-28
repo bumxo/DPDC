@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, requireAdminContext } from "@/lib/supabase/admin";
 import { formatDate } from "@/lib/format";
 import type { Role } from "@/lib/types";
 import { CreateUserForm } from "./create-user-form";
@@ -64,6 +64,10 @@ async function loadUsers(): Promise<UserRow[]> {
 }
 
 export default async function AdminUsersPage() {
+  const viewer = await requireAdminContext();
+  const isSuperuser = viewer.ok && viewer.context.isSuperuser;
+  const viewerId = viewer.ok ? viewer.context.actorId : "";
+
   let users: UserRow[] = [];
   let loadError: string | null = null;
 
@@ -92,7 +96,9 @@ export default async function AdminUsersPage() {
     );
   }
 
-  const adminCount = users.filter((u) => u.role === "admin").length;
+  const adminCount = users.filter(
+    (u) => u.role === "admin" || u.role === "superuser"
+  ).length;
 
   return (
     <div>
@@ -100,11 +106,12 @@ export default async function AdminUsersPage() {
         <h1 className="text-2xl font-bold">Accounts</h1>
         <p className="mt-1 text-sm text-gray-500">
           {users.length} account{users.length === 1 ? "" : "s"} · {adminCount}{" "}
-          admin{adminCount === 1 ? "" : "s"}
+          with admin access
+          {!isSuperuser && " · deleting accounts requires a superuser"}
         </p>
       </div>
 
-      <CreateUserForm />
+      <CreateUserForm canCreateSuperuser={isSuperuser} />
 
       <div className="mt-8 overflow-x-auto rounded-lg border border-gray-200 bg-white">
         <table className="w-full text-sm">
@@ -136,9 +143,11 @@ export default async function AdminUsersPage() {
                 <td className="px-4 py-3">
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      user.role === "admin"
-                        ? "bg-brand-100 text-brand-800"
-                        : "bg-gray-100 text-gray-700"
+                      user.role === "superuser"
+                        ? "bg-purple-100 text-purple-800"
+                        : user.role === "admin"
+                          ? "bg-brand-100 text-brand-800"
+                          : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     {user.role}
@@ -151,7 +160,11 @@ export default async function AdminUsersPage() {
                   {user.lastSignInAt ? formatDate(user.lastSignInAt) : "never"}
                 </td>
                 <td className="px-4 py-3">
-                  <UserRowActions user={user} />
+                  <UserRowActions
+                    user={user}
+                    viewerIsSuperuser={isSuperuser}
+                    isSelf={user.id === viewerId}
+                  />
                 </td>
               </tr>
             ))}
