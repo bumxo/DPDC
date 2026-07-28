@@ -26,6 +26,18 @@ RLS) · Tailwind CSS · deployable to Vercel.
 - **Admin dashboard** — overview with order counts and low-stock list
   (`/admin`), all orders with status updates (`/admin/orders`), and full
   product CRUD (`/admin/products`).
+- **Units of measure (UOM)** — each product can be sold in several units
+  (Piece, Blister of 10, Box of 100, Bottle…) with a price per UOM; the
+  catalog price follows the selected UOM. Stock is tracked in base units
+  (`units_per_uom` converts, e.g. a Box of 100 consumes 100 stock units).
+- **Excel mass upload** — Admin → Products → Mass upload accepts an .xlsx
+  file (template in `public/templates/product-import-template.xlsx`,
+  pre-filled with 100 sample pharmacy items). Products are upserted by SKU;
+  each row is one UOM price line.
+- **Activity logs** — Admin → Logs shows an audit trail (product
+  create/update/delete, imports, order placement, status changes) captured
+  by database triggers.
+- Prices are displayed in Philippine pesos (₱).
 
 ## Security model
 
@@ -70,12 +82,15 @@ supabase link --project-ref YOUR_PROJECT_REF
 supabase db push
 ```
 
-…or open **SQL Editor** in the Supabase dashboard and run the contents of
-[`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql).
+…or open **SQL Editor** in the Supabase dashboard and run each migration in
+[`supabase/migrations/`](supabase/migrations/) **in order** (0001, then 0002).
 
-This creates the `profiles`, `products`, `orders`, and `order_items` tables,
-all RLS policies, the signup trigger, the status-transition trigger, and the
-`place_order` checkout function.
+- `0001_init.sql` — `profiles`, `products`, `orders`, `order_items` tables,
+  RLS policies, signup trigger, status-transition trigger, and the
+  `place_order` checkout function.
+- `0002_uoms_and_audit_logs.sql` — `product_uoms` (per-UOM pricing),
+  UOM columns on `order_items`, the `audit_logs` table with logging
+  triggers, and the UOM-aware `place_order` v2.
 
 ### 4. Seed sample data
 

@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
 interface ItemRow {
   qty: number;
   unit_price: number;
+  uom: string;
+  units_per_uom: number;
   product: { name: string; sku: string } | null;
 }
 
@@ -35,7 +37,7 @@ export default async function OrderDetailPage({
 
   const { data: items } = await supabase
     .from("order_items")
-    .select("qty, unit_price, product:products(name, sku)")
+    .select("qty, unit_price, uom, units_per_uom, product:products(name, sku)")
     .eq("order_id", params.id);
 
   return (
@@ -82,9 +84,11 @@ export default async function OrderDetailPage({
                   <p className="font-medium">
                     {item.product?.name ?? "(removed product)"}
                   </p>
-                  {item.product?.sku && (
-                    <p className="text-xs text-gray-500">{item.product.sku}</p>
-                  )}
+                  <p className="text-xs text-gray-500">
+                    {item.product?.sku && `${item.product.sku} · `}
+                    {item.uom}
+                    {item.units_per_uom > 1 && ` (${item.units_per_uom} pcs)`}
+                  </p>
                 </td>
                 <td className="px-4 py-3 text-right">{item.qty}</td>
                 <td className="px-4 py-3 text-right">

@@ -1,7 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney } from "@/lib/format";
-import type { Product } from "@/lib/types";
+import type { ProductWithUoms } from "@/lib/types";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CartPanel } from "@/components/cart-panel";
 
@@ -19,7 +18,7 @@ export default async function ProductsPage({
   const supabase = createClient();
   let query = supabase
     .from("products")
-    .select("*")
+    .select("*, uoms:product_uoms(*)")
     .eq("is_active", true)
     .order("name");
 
@@ -66,7 +65,7 @@ export default async function ProductsPage({
 
         {products && products.length > 0 && (
           <ul className="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
-            {(products as Product[]).map((product) => (
+            {(products as ProductWithUoms[]).map((product) => (
               <li
                 key={product.id}
                 className="flex flex-wrap items-center gap-3 p-4"
@@ -93,12 +92,7 @@ export default async function ProductsPage({
                       : `${product.stock_qty} in stock`}
                   </p>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="whitespace-nowrap font-semibold">
-                    {formatMoney(product.unit_price)}
-                  </span>
-                  <AddToCartButton product={product} />
-                </div>
+                <AddToCartButton product={product} />
               </li>
             ))}
           </ul>

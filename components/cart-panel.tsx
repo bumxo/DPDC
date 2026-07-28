@@ -18,7 +18,11 @@ export function CartPanel() {
     setError(null);
     startTransition(async () => {
       const result = await placeOrder(
-        items.map((i) => ({ productId: i.productId, qty: i.qty }))
+        items.map((i) => ({
+          productId: i.productId,
+          uomId: i.uomId,
+          qty: i.qty,
+        }))
       );
       if (result.error) {
         setError(result.error);
@@ -54,16 +58,18 @@ export function CartPanel() {
         <>
           <ul className="mb-3 divide-y divide-gray-100">
             {items.map((item) => (
-              <li key={item.productId} className="py-2.5">
+              <li key={`${item.productId}:${item.uomId}`} className="py-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{item.name}</p>
                     <p className="text-xs text-gray-500">
+                      {item.uomName}
+                      {item.unitsPerUom > 1 && ` (${item.unitsPerUom} pcs)`} ·{" "}
                       {formatMoney(item.unitPrice)} each
                     </p>
                   </div>
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.productId, item.uomId)}
                     aria-label={`Remove ${item.name}`}
                     className="text-gray-400 hover:text-red-600"
                   >
@@ -73,7 +79,9 @@ export function CartPanel() {
                 <div className="mt-1.5 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => setQty(item.productId, item.qty - 1)}
+                      onClick={() =>
+                        setQty(item.productId, item.uomId, item.qty - 1)
+                      }
                       aria-label={`Decrease quantity of ${item.name}`}
                       className="h-6 w-6 rounded border border-gray-300 text-xs text-gray-600 hover:bg-gray-100"
                     >
@@ -81,8 +89,13 @@ export function CartPanel() {
                     </button>
                     <span className="w-8 text-center text-sm">{item.qty}</span>
                     <button
-                      onClick={() => setQty(item.productId, item.qty + 1)}
-                      disabled={item.qty >= item.stockQty}
+                      onClick={() =>
+                        setQty(item.productId, item.uomId, item.qty + 1)
+                      }
+                      disabled={
+                        item.qty * item.unitsPerUom + item.unitsPerUom >
+                        item.stockQty
+                      }
                       aria-label={`Increase quantity of ${item.name}`}
                       className="h-6 w-6 rounded border border-gray-300 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-40"
                     >

@@ -131,6 +131,102 @@ export async function deleteProduct(productId: string): Promise<ActionState> {
   return {};
 }
 
+export async function addProductUom(
+  productId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, error: authError } = await requireAdminClient();
+  if (authError) return { error: authError };
+
+  const uom = String(formData.get("uom") ?? "").trim();
+  const unitsPerUom = Number(formData.get("units_per_uom"));
+  const price = Number(formData.get("price"));
+
+  if (!uom) return { error: "UOM name is required." };
+  if (!Number.isInteger(unitsPerUom) || unitsPerUom <= 0) {
+    return { error: "Units per UOM must be a positive integer." };
+  }
+  if (!Number.isFinite(price) || price < 0) {
+    return { error: "Price must be a non-negative number." };
+  }
+
+  const { error } = await supabase.from("product_uoms").insert({
+    product_id: productId,
+    uom,
+    units_per_uom: unitsPerUom,
+    price,
+  });
+
+  if (error) {
+    return {
+      error:
+        error.code === "23505"
+          ? "This product already has that UOM."
+          : error.message,
+    };
+  }
+
+  revalidatePath(`/admin/products/${productId}/edit`);
+  revalidatePath("/products");
+  return {};
+}
+
+export async function updateProductUom(
+  uomId: string,
+  productId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, error: authError } = await requireAdminClient();
+  if (authError) return { error: authError };
+
+  const unitsPerUom = Number(formData.get("units_per_uom"));
+  const price = Number(formData.get("price"));
+
+  if (!Number.isInteger(unitsPerUom) || unitsPerUom <= 0) {
+    return { error: "Units per UOM must be a positive integer." };
+  }
+  if (!Number.isFinite(price) || price < 0) {
+    return { error: "Price must be a non-negative number." };
+  }
+
+  const { error } = await supabase
+    .from("product_uoms")
+    .update({ units_per_uom: unitsPerUom, price })
+    .eq("id", uomId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/products/${productId}/edit`);
+  revalidatePath("/products");
+  return {};
+}
+
+export async function deleteProductUom(
+  uomId: string,
+  productId: string
+): Promise<ActionState> {
+  const { supabase, error: authError } = await requireAdminClient();
+  if (authError) return { error: authError };
+
+  const { count } = await supabase
+    .from("product_uoms")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", productId);
+
+  if ((count ?? 0) <= 1) {
+    return { error: "A product must keep at least one UOM." };
+  }
+
+  const { error } = await supabase.from("product_uoms").delete().eq("id", uomId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/products/${productId}/edit`);
+  revalidatePath("/products");
+  return {};
+}
+
 export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,

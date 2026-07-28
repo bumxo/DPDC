@@ -9,7 +9,7 @@ export interface CheckoutResult {
 }
 
 export async function placeOrder(
-  items: { productId: string; qty: number }[]
+  items: { productId: string; uomId: string; qty: number }[]
 ): Promise<CheckoutResult> {
   if (!Array.isArray(items) || items.length === 0) {
     return { error: "Your cart is empty." };
@@ -17,10 +17,15 @@ export async function placeOrder(
 
   const payload = items.map((i) => ({
     product_id: i.productId,
+    uom_id: i.uomId,
     qty: Math.floor(i.qty),
   }));
 
-  if (payload.some((i) => !i.product_id || !Number.isFinite(i.qty) || i.qty <= 0)) {
+  if (
+    payload.some(
+      (i) => !i.product_id || !i.uom_id || !Number.isFinite(i.qty) || i.qty <= 0
+    )
+  ) {
     return { error: "Cart contains an invalid item." };
   }
 

@@ -44,6 +44,27 @@ export interface Product {
   updated_at: string;
 }
 
+export interface ProductUom {
+  id: string;
+  product_id: string;
+  uom: string;
+  units_per_uom: number;
+  price: number;
+  is_default: boolean;
+}
+
+export type ProductWithUoms = Product & { uoms: ProductUom[] };
+
+export interface AuditLog {
+  id: number;
+  actor_id: string | null;
+  action: string;
+  entity: string;
+  entity_id: string | null;
+  details: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export interface Order {
   id: string;
   customer_id: string;
@@ -55,12 +76,17 @@ export interface Order {
 export interface OrderItem {
   order_id: string;
   product_id: string;
+  uom: string;
+  units_per_uom: number;
   qty: number;
   unit_price: number;
 }
 
 export interface CartItem {
   productId: string;
+  uomId: string;
+  uomName: string;
+  unitsPerUom: number;
   sku: string;
   name: string;
   unitPrice: number;
