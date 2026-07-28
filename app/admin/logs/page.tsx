@@ -13,6 +13,11 @@ const ACTION_LABELS: Record<string, string> = {
   "products.imported": "Excel import",
   "order.placed": "Order placed",
   "order.status_changed": "Order status changed",
+  "account.password_changed": "Password changed",
+  "account.email_change_requested": "Email change requested",
+  "account.verification_resent": "Verification email resent",
+  "account.password_reset_requested": "Password reset requested",
+  "account.password_reset_completed": "Password reset completed",
 };
 
 function describe(log: LogRow): string {
@@ -43,6 +48,12 @@ function describe(log: LogRow): string {
       return `Order ${String(log.entity_id ?? "").slice(0, 8).toUpperCase()} — total ${d.total ?? ""}`;
     case "order.status_changed":
       return `Order ${String(log.entity_id ?? "").slice(0, 8).toUpperCase()}: ${d.from} → ${d.to}`;
+    case "account.email_change_requested":
+      return `New address: ${d.to ?? ""}`;
+    case "account.password_changed":
+    case "account.password_reset_completed":
+    case "account.verification_resent":
+      return "—";
     default:
       return JSON.stringify(d);
   }

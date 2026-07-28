@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "Sign in — DPDC B2B" };
@@ -14,6 +15,14 @@ export default function LoginPage({
         Use your company account to place and track orders.
       </p>
       <LoginForm next={searchParams.next} />
+      <p className="mt-4 text-center text-sm">
+        <Link
+          href="/forgot-password"
+          className="text-brand-600 hover:underline"
+        >
+          Forgot your password?
+        </Link>
+      </p>
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login"];
+// Reachable without a session. `/auth` handles emailed links, which are
+// followed before any session exists. `/reset-password` is deliberately not
+// listed: it needs the temporary session created by the recovery link.
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

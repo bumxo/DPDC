@@ -66,7 +66,7 @@ export function ProductForm({ product }: { product?: Product }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="unit_price" className="mb-1 block text-sm font-medium">
-            Unit price (USD)
+            Base unit price (₱)
           </label>
           <input
             id="unit_price"

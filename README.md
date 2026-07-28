@@ -34,9 +34,16 @@ RLS) · Tailwind CSS · deployable to Vercel.
   file (template in `public/templates/product-import-template.xlsx`,
   pre-filled with 100 sample pharmacy items). Products are upserted by SKU;
   each row is one UOM price line.
+- **Account security** — `/account` lets a signed-in user change their
+  password (the current one is re-verified first) and change their email
+  address (confirmed by a link sent to the new inbox). Forgotten passwords
+  are recovered via `/forgot-password` → emailed link → `/reset-password`.
+- **Email verification** — verification status is shown on the account page,
+  with a resend button and a site-wide banner while an address is
+  unverified.
 - **Activity logs** — Admin → Logs shows an audit trail (product
-  create/update/delete, imports, order placement, status changes) captured
-  by database triggers.
+  create/update/delete, imports, order placement, status changes, and
+  account events like password changes) captured by database triggers.
 - Prices are displayed in Philippine pesos (₱).
 
 ## Security model
@@ -92,11 +99,36 @@ supabase db push
   UOM columns on `order_items`, the `audit_logs` table with logging
   triggers, and the UOM-aware `place_order` v2.
 
-`0002` is idempotent: re-running it is safe and repairs a partially applied
-state, so if a run fails partway (or you are unsure whether it was applied)
-just paste and run the whole file again. It ends with
+- `0003_account_security.sql` — syncs `profiles.email` when a user confirms
+  an email change, and adds `log_account_event()` so users can record their
+  own account events without `audit_logs` being writable by them.
+
+`0002` and `0003` are idempotent: re-running them is safe and repairs a
+partially applied state, so if a run fails partway (or you are unsure whether
+it was applied) just paste and run the whole file again. Both end with
 `notify pgrst, 'reload schema'` so Supabase's API layer picks up the new
 tables immediately.
+
+### 3b. Configure auth emails
+
+The password-reset and email-verification links are sent by Supabase, so the
+project needs to know where to send people back to. In the dashboard under
+**Authentication → URL Configuration**:
+
+- **Site URL** — your deployed URL (e.g. `https://your-app.vercel.app`).
+- **Redirect URLs** — add `https://your-app.vercel.app/auth/confirm` and,
+  for local development, `http://localhost:3000/auth/confirm`.
+
+Also set `NEXT_PUBLIC_SITE_URL` in the app's environment so emailed links
+point at the right host.
+
+Two things worth knowing about Supabase's built-in email sender: it is
+rate-limited to a handful of messages per hour and is meant for development
+only, so configure your own SMTP provider under **Authentication → Emails →
+SMTP Settings** before real users rely on password resets. And under
+**Authentication → Sign In / Providers → Email**, the *Confirm email* toggle
+decides whether a brand-new account must verify before it can sign in —
+accounts created by the seed script are pre-confirmed either way.
 
 ### 4. Seed sample data
 
@@ -137,6 +169,10 @@ seeded account.
 actions/            Server actions (auth, checkout, admin mutations)
 app/
   login/            Sign-in page
+  forgot-password/  Request a password-reset email
+  reset-password/   Set a new password from a recovery link
+  auth/confirm/     Landing route for emailed verification/recovery links
+  account/          Change password, change email, verification status
   products/         Customer catalog with search + cart panel + checkout
   cart/             Redirects to /products (cart lives there now)
   orders/           Customer order history + detail
