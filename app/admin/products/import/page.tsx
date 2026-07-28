@@ -6,7 +6,7 @@ export default function ImportProductsPage() {
     <div className="max-w-2xl">
       <Link
         href="/admin/products"
-        className="mb-4 inline-block text-sm text-blue-600 hover:underline"
+        className="mb-4 inline-block text-sm text-brand-600 hover:underline"
       >
         ← Products
       </Link>
@@ -17,7 +17,7 @@ export default function ImportProductsPage() {
         ones are updated, new ones are created.
       </p>
 
-      <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+      <div className="mb-6 rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-brand-900">
         <p className="mb-2 font-semibold">Template format</p>
         <p className="mb-2">
           <a

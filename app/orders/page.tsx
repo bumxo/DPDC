@@ -27,7 +27,7 @@ export default async function OrdersPage() {
           <p className="mb-3 text-gray-500">You haven&apos;t placed any orders yet.</p>
           <Link
             href="/products"
-            className="text-sm font-medium text-blue-600 hover:underline"
+            className="text-sm font-medium text-brand-600 hover:underline"
           >
             Browse products →
           </Link>
@@ -39,7 +39,7 @@ export default async function OrdersPage() {
           <li key={order.id}>
             <Link
               href={`/orders/${order.id}`}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-blue-300"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:border-brand-300"
             >
               <div>
                 <p className="font-medium">Order #{shortId(order.id)}</p>

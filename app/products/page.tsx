@@ -40,7 +40,7 @@ export default async function ProductsPage({
               name="q"
               defaultValue={q}
               placeholder="Search by name, SKU…"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none sm:w-64"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none sm:w-64"
             />
             <button
               type="submit"

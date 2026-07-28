@@ -26,7 +26,7 @@ export default async function EditProductPage({
     <div>
       <Link
         href="/admin/products"
-        className="mb-4 inline-block text-sm text-blue-600 hover:underline"
+        className="mb-4 inline-block text-sm text-brand-600 hover:underline"
       >
         ← Products
       </Link>

@@ -45,7 +45,7 @@ function UomRow({ uom, productId }: { uom: ProductUom; productId: string }) {
       <td className="px-3 py-2 font-medium">
         {uom.uom}
         {uom.is_default && (
-          <span className="ml-1.5 rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-700">
+          <span className="ml-1.5 rounded bg-brand-50 px-1.5 py-0.5 text-xs text-brand-700">
             default
           </span>
         )}
@@ -78,7 +78,7 @@ function UomRow({ uom, productId }: { uom: ProductUom; productId: string }) {
             <button
               onClick={save}
               disabled={isPending}
-              className="text-sm font-medium text-blue-600 hover:underline disabled:opacity-50"
+              className="text-sm font-medium text-brand-600 hover:underline disabled:opacity-50"
             >
               Save
             </button>
@@ -191,7 +191,7 @@ export function UomManager({
                 <button
                   onClick={add}
                   disabled={isPending || !uomName || !price}
-                  className="rounded-md bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="rounded-md bg-brand-600 px-3 py-1 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
                 >
                   Add
                 </button>

@@ -10,7 +10,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+      className="rounded-md bg-brand-600 px-5 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
     >
       {pending ? "Saving…" : label}
     </button>
@@ -33,7 +33,7 @@ export function ProductForm({ product }: { product?: Product }) {
             name="sku"
             required
             defaultValue={product?.sku}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
           />
         </div>
         <div>
@@ -45,7 +45,7 @@ export function ProductForm({ product }: { product?: Product }) {
             name="name"
             required
             defaultValue={product?.name}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
           />
         </div>
       </div>
@@ -59,7 +59,7 @@ export function ProductForm({ product }: { product?: Product }) {
           name="description"
           rows={3}
           defaultValue={product?.description ?? ""}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
         />
       </div>
 
@@ -76,7 +76,7 @@ export function ProductForm({ product }: { product?: Product }) {
             min="0"
             required
             defaultValue={product?.unit_price}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
           />
         </div>
         <div>
@@ -91,7 +91,7 @@ export function ProductForm({ product }: { product?: Product }) {
             min="0"
             required
             defaultValue={product?.stock_qty}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
           />
         </div>
       </div>

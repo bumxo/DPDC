@@ -61,7 +61,7 @@ export function OrderStatusActions({
             className={`rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 ${
               next === "cancelled"
                 ? "border border-red-300 text-red-700 hover:bg-red-50"
-                : "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-brand-600 text-white hover:bg-brand-700"
             }`}
           >
             {LABELS[next] ?? next}

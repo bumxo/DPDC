@@ -33,7 +33,7 @@ export default async function AdminOverviewPage() {
             <Link
               key={status}
               href="/admin/orders"
-              className="rounded-lg border border-gray-200 bg-white p-4 text-center shadow-sm hover:border-blue-300"
+              className="rounded-lg border border-gray-200 bg-white p-4 text-center shadow-sm hover:border-brand-300"
             >
               <p className="text-2xl font-bold">{count}</p>
               <StatusBadge status={status} />
@@ -81,7 +81,7 @@ export default async function AdminOverviewPage() {
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/admin/products/${p.id}/edit`}
-                        className="text-blue-600 hover:underline"
+                        className="text-brand-600 hover:underline"
                       >
                         Restock
                       </Link>

@@ -7,9 +7,12 @@ export async function Nav() {
   const profile = await getProfile();
 
   return (
-    <header className="sticky top-0 z-10 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-10 border-b-2 border-brand-600 bg-white">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3">
-        <Link href="/products" className="mr-4 text-lg font-bold tracking-tight">
+        <Link
+          href="/products"
+          className="mr-4 text-lg font-bold tracking-tight text-brand-700"
+        >
           DPDC&nbsp;<span className="font-normal text-gray-500">B2B</span>
         </Link>
 
@@ -31,7 +34,7 @@ export async function Nav() {
             {profile.role === "admin" && (
               <Link
                 href="/admin"
-                className="rounded-md px-3 py-2 font-medium text-blue-700 hover:bg-blue-50"
+                className="rounded-md px-3 py-2 font-medium text-brand-700 hover:bg-brand-50"
               >
                 Admin
               </Link>

@@ -52,7 +52,7 @@ export function AddToCartButton({ product }: { product: ProductWithUoms }) {
           value={uomId}
           onChange={(e) => setUomId(e.target.value)}
           aria-label={`Unit of measure for ${product.name}`}
-          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+          className="rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
         >
           {uoms.map((u) => (
             <option key={u.id} value={u.id}>
@@ -70,7 +70,7 @@ export function AddToCartButton({ product }: { product: ProductWithUoms }) {
           setTimeout(() => setJustAdded(false), 1200);
         }}
         disabled={!canAdd}
-        className="whitespace-nowrap rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="whitespace-nowrap rounded-md bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {outOfStock
           ? "Unavailable"

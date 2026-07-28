@@ -42,7 +42,7 @@ export default async function AdminOrderDetailPage({
     <div className="mx-auto max-w-2xl">
       <Link
         href="/admin/orders"
-        className="mb-4 inline-block text-sm text-blue-600 hover:underline"
+        className="mb-4 inline-block text-sm text-brand-600 hover:underline"
       >
         ← All orders
       </Link>

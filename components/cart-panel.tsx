@@ -124,7 +124,7 @@ export function CartPanel() {
           <button
             onClick={submitOrder}
             disabled={isPending}
-            className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-md bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
           >
             {isPending ? "Placing order…" : "Place order"}
           </button>

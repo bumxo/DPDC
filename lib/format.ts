@@ -8,12 +8,13 @@ export function formatMoney(value: number | string) {
 }
 
 export function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("en-US", {
+  return new Date(value).toLocaleDateString("en-PH", {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Manila",
   });
 }
 
