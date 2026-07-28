@@ -1,14 +1,6 @@
-import { requireUser } from "@/lib/auth";
-import { CartView } from "@/components/cart-view";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Cart — DPDC B2B" };
-
-export default async function CartPage() {
-  await requireUser();
-  return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold">Your cart</h1>
-      <CartView />
-    </div>
-  );
+// The cart now lives on the products page itself.
+export default function CartPage() {
+  redirect("/products");
 }

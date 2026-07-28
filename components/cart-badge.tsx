@@ -8,7 +8,7 @@ export function CartBadge() {
 
   return (
     <Link
-      href="/cart"
+      href="/products"
       className="relative rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900"
     >
       Cart

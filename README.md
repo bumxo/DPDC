@@ -12,8 +12,9 @@ RLS) · Tailwind CSS · deployable to Vercel.
 - **Auth** — email/password sign-in via Supabase Auth with two roles:
   `customer` and `admin` (stored in a `profiles` table, auto-created by a
   database trigger on signup).
-- **Catalog** — customers browse and search active products (`/products`).
-- **Cart & checkout** — client-side cart (localStorage) with quantity
+- **Catalog & checkout on one page** — customers browse and search active
+  products with a sticky cart panel alongside the list (`/products`).
+- **Cart** — client-side cart (localStorage) with quantity
   controls; checkout runs through a server action that calls the
   `place_order` Postgres function, which locks product rows, validates
   stock, decrements it, and creates the order atomically.
@@ -115,8 +116,8 @@ seeded account.
 actions/            Server actions (auth, checkout, admin mutations)
 app/
   login/            Sign-in page
-  products/         Customer catalog with search
-  cart/             Cart + checkout
+  products/         Customer catalog with search + cart panel + checkout
+  cart/             Redirects to /products (cart lives there now)
   orders/           Customer order history + detail
   admin/            Admin overview, orders, product CRUD (role-guarded)
 components/         UI components (cart provider, forms, tables, badges)
