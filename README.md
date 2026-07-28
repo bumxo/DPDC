@@ -92,6 +92,12 @@ supabase db push
   UOM columns on `order_items`, the `audit_logs` table with logging
   triggers, and the UOM-aware `place_order` v2.
 
+`0002` is idempotent: re-running it is safe and repairs a partially applied
+state, so if a run fails partway (or you are unsure whether it was applied)
+just paste and run the whole file again. It ends with
+`notify pgrst, 'reload schema'` so Supabase's API layer picks up the new
+tables immediately.
+
 ### 4. Seed sample data
 
 ```bash

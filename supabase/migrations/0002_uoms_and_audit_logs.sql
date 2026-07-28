@@ -1,5 +1,9 @@
 -- Adds: multiple units of measure (UOM) per product with per-UOM pricing,
 -- and an admin audit log. Run after 0001_init.sql.
+--
+-- This migration is idempotent — re-running it is safe and repairs a
+-- partially applied state, so it can be pasted into the Supabase SQL editor
+-- as many times as needed.
 
 -- ---------------------------------------------------------------------------
 -- Product UOMs
@@ -8,7 +12,7 @@
 -- `units_per_uom` converts to base stock units: products.stock_qty is always
 -- tracked in base units (e.g. one tablet), so a Box of 100 consumes 100.
 
-create table public.product_uoms (
+create table if not exists public.product_uoms (
   id            uuid primary key default gen_random_uuid(),
   product_id    uuid not null references public.products (id) on delete cascade,
   uom           text not null,
@@ -19,12 +23,14 @@ create table public.product_uoms (
   unique (product_id, uom)
 );
 
-create index product_uoms_product_id_idx on public.product_uoms (product_id);
+create index if not exists product_uoms_product_id_idx
+  on public.product_uoms (product_id);
 
--- Backfill: every existing product gets a base "Piece" UOM at its unit_price.
+-- Backfill: every product without a UOM gets a base "Piece" at its unit_price.
 insert into public.product_uoms (product_id, uom, units_per_uom, price, is_default)
 select id, 'Piece', 1, unit_price, true
-from public.products;
+from public.products
+on conflict (product_id, uom) do nothing;
 
 -- New products automatically get a base UOM so the catalog always has a price.
 create or replace function public.create_default_uom()
@@ -35,17 +41,20 @@ set search_path = public
 as $$
 begin
   insert into public.product_uoms (product_id, uom, units_per_uom, price, is_default)
-  values (new.id, 'Piece', 1, new.unit_price, true);
+  values (new.id, 'Piece', 1, new.unit_price, true)
+  on conflict (product_id, uom) do nothing;
   return new;
 end;
 $$;
 
+drop trigger if exists products_create_default_uom on public.products;
 create trigger products_create_default_uom
   after insert on public.products
   for each row execute function public.create_default_uom();
 
 alter table public.product_uoms enable row level security;
 
+drop policy if exists "product_uoms: read with product" on public.product_uoms;
 create policy "product_uoms: read with product"
   on public.product_uoms for select
   to authenticated
@@ -56,16 +65,19 @@ create policy "product_uoms: read with product"
     )
   );
 
+drop policy if exists "product_uoms: admin insert" on public.product_uoms;
 create policy "product_uoms: admin insert"
   on public.product_uoms for insert
   to authenticated
   with check (public.is_admin());
 
+drop policy if exists "product_uoms: admin update" on public.product_uoms;
 create policy "product_uoms: admin update"
   on public.product_uoms for update
   to authenticated
   using (public.is_admin());
 
+drop policy if exists "product_uoms: admin delete" on public.product_uoms;
 create policy "product_uoms: admin delete"
   on public.product_uoms for delete
   to authenticated
@@ -75,18 +87,30 @@ create policy "product_uoms: admin delete"
 -- Order items: record which UOM was purchased
 -- ---------------------------------------------------------------------------
 
-alter table public.order_items add column uom text not null default 'Piece';
-alter table public.order_items add column units_per_uom integer not null default 1;
+alter table public.order_items add column if not exists uom text not null default 'Piece';
+alter table public.order_items add column if not exists units_per_uom integer not null default 1;
 
--- The same product can now appear on one order in different UOMs.
-alter table public.order_items drop constraint order_items_pkey;
-alter table public.order_items add primary key (order_id, product_id, uom);
+-- The same product can now appear on one order in different UOMs, so the
+-- primary key gains the uom column. Only rewrite it if it is still the
+-- original two-column key.
+do $$
+begin
+  if exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.order_items'::regclass
+      and contype = 'p'
+      and array_length(conkey, 1) = 2
+  ) then
+    alter table public.order_items drop constraint order_items_pkey;
+    alter table public.order_items add primary key (order_id, product_id, uom);
+  end if;
+end $$;
 
 -- ---------------------------------------------------------------------------
 -- Audit log
 -- ---------------------------------------------------------------------------
 
-create table public.audit_logs (
+create table if not exists public.audit_logs (
   id         bigint generated always as identity primary key,
   actor_id   uuid references public.profiles (id) on delete set null,
   action     text not null,
@@ -96,16 +120,19 @@ create table public.audit_logs (
   created_at timestamptz not null default now()
 );
 
-create index audit_logs_created_at_idx on public.audit_logs (created_at desc);
+create index if not exists audit_logs_created_at_idx
+  on public.audit_logs (created_at desc);
 
 alter table public.audit_logs enable row level security;
 
+drop policy if exists "audit_logs: admin read" on public.audit_logs;
 create policy "audit_logs: admin read"
   on public.audit_logs for select
   to authenticated
   using (public.is_admin());
 
 -- Server actions (e.g. the Excel import) write summary entries directly.
+drop policy if exists "audit_logs: admin insert" on public.audit_logs;
 create policy "audit_logs: admin insert"
   on public.audit_logs for insert
   to authenticated
@@ -146,6 +173,7 @@ begin
 end;
 $$;
 
+drop trigger if exists products_audit on public.products;
 create trigger products_audit
   after insert or update or delete on public.products
   for each row execute function public.audit_products();
@@ -171,6 +199,7 @@ begin
 end;
 $$;
 
+drop trigger if exists orders_audit on public.orders;
 create trigger orders_audit
   after insert or update on public.orders
   for each row execute function public.audit_orders();
@@ -259,6 +288,9 @@ begin
 end;
 $$;
 
+revoke all on function public.place_order(jsonb) from public, anon;
+grant execute on function public.place_order(jsonb) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Cancellation stock restore must now use units_per_uom
 -- ---------------------------------------------------------------------------
@@ -298,3 +330,6 @@ begin
   return new;
 end;
 $$;
+
+-- Tell Supabase's API layer to pick up the new tables and relationships.
+notify pgrst, 'reload schema';
