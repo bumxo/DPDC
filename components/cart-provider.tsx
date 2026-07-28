@@ -18,14 +18,26 @@ interface CartContextValue {
   setQty: (productId: string, uomId: string, qty: number) => void;
   removeItem: (productId: string, uomId: string) => void;
   clear: () => void;
+  /** Highest qty this line can hold given stock shared with its sibling UOMs. */
+  maxQtyFor: (line: CartItem) => number;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "dpdc-cart-v2";
 
-/** Max orderable qty for a cart line, given base-unit stock. */
-function maxQty(item: Pick<CartItem, "stockQty" | "unitsPerUom">) {
-  return Math.floor(item.stockQty / item.unitsPerUom);
+/**
+ * Max orderable qty for one cart line. Stock is shared across a product's
+ * UOMs, so units already committed by its other lines are subtracted first.
+ */
+function maxQty(line: CartItem, all: CartItem[]) {
+  const otherUnits = all.reduce(
+    (sum, i) =>
+      i.productId === line.productId && i.uomId !== line.uomId
+        ? sum + i.qty * i.unitsPerUom
+        : sum,
+    0
+  );
+  return Math.max(0, Math.floor((line.stockQty - otherUnits) / line.unitsPerUom));
 }
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
@@ -55,7 +67,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (existing) {
           return prev.map((i) =>
             i === existing
-              ? { ...i, qty: Math.min(i.qty + qty, maxQty(i)) }
+              ? { ...i, qty: Math.min(i.qty + qty, maxQty(i, prev)) }
               : i
           );
         }
@@ -70,7 +82,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           stockQty: product.stock_qty,
           qty: 0,
         };
-        line.qty = Math.min(qty, maxQty(line));
+        line.qty = Math.min(qty, maxQty(line, prev));
         return line.qty > 0 ? [...prev, line] : prev;
       });
     },
@@ -83,7 +95,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         ? prev.filter((i) => !(i.productId === productId && i.uomId === uomId))
         : prev.map((i) =>
             i.productId === productId && i.uomId === uomId
-              ? { ...i, qty: Math.min(qty, maxQty(i)) }
+              ? { ...i, qty: Math.min(qty, maxQty(i, prev)) }
               : i
           )
     );
@@ -100,7 +112,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(() => {
     const count = items.reduce((sum, i) => sum + i.qty, 0);
     const total = items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
-    return { items, count, total, addItem, setQty, removeItem, clear };
+    return {
+      items,
+      count,
+      total,
+      addItem,
+      setQty,
+      removeItem,
+      clear,
+      maxQtyFor: (line: CartItem) => maxQty(line, items),
+    };
   }, [items, addItem, setQty, removeItem, clear]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

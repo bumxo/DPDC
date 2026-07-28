@@ -8,7 +8,7 @@ import { formatMoney, shortId } from "@/lib/format";
 import { placeOrder } from "@/actions/checkout";
 
 export function CartPanel() {
-  const { items, total, setQty, removeItem, clear } = useCart();
+  const { items, total, setQty, removeItem, clear, maxQtyFor } = useCart();
   const [error, setError] = useState<string | null>(null);
   const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -92,10 +92,7 @@ export function CartPanel() {
                       onClick={() =>
                         setQty(item.productId, item.uomId, item.qty + 1)
                       }
-                      disabled={
-                        item.qty * item.unitsPerUom + item.unitsPerUom >
-                        item.stockQty
-                      }
+                      disabled={item.qty >= maxQtyFor(item)}
                       aria-label={`Increase quantity of ${item.name}`}
                       className="h-6 w-6 rounded border border-gray-300 text-xs text-gray-600 hover:bg-gray-100 disabled:opacity-40"
                     >
