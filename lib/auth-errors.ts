@@ -28,13 +28,22 @@ export function describeAuthError(
     return raw;
   }
 
+  // No message to work with. The HTTP status is then the only real clue, so
+  // include it rather than leaving the reader with nothing to search for.
+  const status = error?.status;
+  const detail = status ? ` (status ${status})` : "";
+
+  if (status === 429) {
+    return `Too many attempts — the email rate limit was hit${detail}. Supabase's built-in sender allows only a few messages per hour. Wait, or configure SMTP under Authentication → Emails.`;
+  }
+
   switch (context) {
     case "signup":
-      return "Sign-up failed and the authentication service returned no details. The usual cause is email delivery: Supabase's built-in sender is capped at a few messages per hour, so configure SMTP under Authentication → Emails. Check Logs → Auth in the Supabase dashboard for the exact reason.";
+      return `Sign-up failed and the service returned no details${detail}. The usual cause is email delivery — Supabase's built-in sender is capped at a few messages per hour. To confirm: turn off "Confirm email" (Authentication → Sign In / Providers → Email) and try again; if it then works, configure SMTP under Authentication → Emails. Logs → Auth shows the exact reason.`;
     case "recovery":
-      return "The reset could not be completed and the authentication service returned no details. Check Logs → Auth in the Supabase dashboard.";
+      return `The reset could not be completed and the service returned no details${detail}. Check Logs → Auth in the Supabase dashboard.`;
     default:
-      return "Something went wrong and the authentication service returned no details. Check Logs → Auth in the Supabase dashboard.";
+      return `Something went wrong and the service returned no details${detail}. Check Logs → Auth in the Supabase dashboard.`;
   }
 }
 
