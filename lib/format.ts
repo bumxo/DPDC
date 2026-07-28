@@ -1,6 +1,23 @@
-const currency = new Intl.NumberFormat("en-PH", {
+/** Philippine business locale: peso amounts, Manila-local timestamps. */
+export const TIME_ZONE = "Asia/Manila";
+const LOCALE = "en-PH";
+
+const currency = new Intl.NumberFormat(LOCALE, {
   style: "currency",
   currency: "PHP",
+});
+
+// Timestamps render server-side, where the host clock is UTC, so the zone is
+// pinned explicitly and labelled (GMT+8) to keep order times unambiguous.
+const dateTime = new Intl.DateTimeFormat(LOCALE, {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+  timeZone: TIME_ZONE,
+  timeZoneName: "short",
 });
 
 export function formatMoney(value: number | string) {
@@ -8,14 +25,7 @@ export function formatMoney(value: number | string) {
 }
 
 export function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("en-PH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Manila",
-  });
+  return dateTime.format(new Date(value));
 }
 
 export function shortId(id: string) {
