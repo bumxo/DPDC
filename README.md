@@ -151,6 +151,22 @@ Creates ~10 sample products plus two confirmed accounts:
 The script is idempotent — rerunning it upserts products by SKU and skips
 existing users.
 
+### 4b. Creating accounts by hand
+
+Accounts can be provisioned directly, without the signup form and without
+sending a confirmation email — useful for onboarding a customer manually,
+creating the first admin, or working before SMTP is configured:
+
+```bash
+npm run create-user -- --email=buyer@corp.ph --password='secret123' \
+                       --company='Corp Pharmacy' --role=admin
+```
+
+`--role` accepts `customer` (default) or `admin`. The account is created
+pre-verified, so no email is involved. Re-running it for an address that
+already exists resets that account's password and updates its company and
+role, which also makes it the way back in if you are locked out.
+
 ### 5. Run the app
 
 ```bash
@@ -190,6 +206,7 @@ lib/
   auth.ts           Profile + role guards for server components
   types.ts          Shared domain types
 scripts/seed.ts     Idempotent seed script (products + accounts)
+scripts/create-user.ts  Provision/reset one account (bypasses signup email)
 supabase/migrations/0001_init.sql   Schema, RLS, triggers, checkout RPC
 middleware.ts       Session refresh + auth redirects
 ```
